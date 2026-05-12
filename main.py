@@ -1,12 +1,13 @@
 import os, requests
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    # Serve o HTML diretamente, sem passar pelo Jinja2
+    return send_from_directory("templates", "index.html")
 
 @app.route("/api/match", methods=["POST"])
 def match():
