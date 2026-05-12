@@ -124,7 +124,7 @@
         <p class="filter-note">Sem seleção = todos os estratos</p>
       </div>
       <div class="field">
-        <label>Área de Avaliação CAPES</label>
+        <label>Área de Avaliação CAPES <span style="color:#e53e3e;font-size:11px;font-weight:700;background:#fff5f5;padding:2px 7px;border-radius:99px;border:1px solid #fca5a5;margin-left:4px">obrigatório</span></label>
         <div class="area-search-wrap" id="area-wrap">
           <input class="area-search" id="area-search" type="text"
             placeholder="Buscar área... ex: medicina, computação"
@@ -134,7 +134,7 @@
         </div>
         <div class="selected-areas" id="sel-areas"></div>
         <p class="area-count" id="area-count" style="display:none"></p>
-        <p class="filter-note">Sem seleção = todas as áreas · múltipla seleção</p>
+        <p class="filter-note">Selecione ao menos uma área para habilitar a busca · múltipla seleção</p>
       </div>
     </div>
   </div>
@@ -225,14 +225,7 @@ const EX={
 };
 function ex(k){const e=EX[k];document.getElementById('inp-t').value=e.t;document.getElementById('inp-a').value=e.a;document.getElementById('inp-k').value=e.k;}
 
-// ── Keyword pre-filter ─────────────────────────────────────────
-function preFilter(pool,text,max){
-  const tokens=text.toLowerCase().replace(/[^a-záàãâéêíóôõúüçñ\s]/g,'').split(/\s+/).filter(t=>t.length>3);
-  if(!tokens.length)return pool.slice(0,max);
-  const scored=pool.map(j=>[j,tokens.reduce((s,t)=>(j[1]+' '+j[3]).toLowerCase().includes(t)?s+1:s,0)]);
-  scored.sort((a,b)=>b[1]-a[1]);
-  return scored.map(x=>x[0]).slice(0,max);
-}
+// Pré-filtro por keyword removido — filtros de Área e Qualis garantem a precisão
 
 // ── Busca ──────────────────────────────────────────────────────
 async function search(){
@@ -242,13 +235,19 @@ async function search(){
   const k=document.getElementById('inp-k').value.trim();
   if(!t&&!a&&!k){document.getElementById('results').innerHTML='<div class="err">⚠️ Preencha ao menos o título ou abstract.</div>';return;}
 
-  let pool=DB.filter(j=>(!selQ.size||selQ.has(j[2]))&&(!selAreas.size||[...selAreas].some(sa=>j[3].includes(sa))));
-  if(!pool.length){document.getElementById('results').innerHTML='<div class="err">⚠️ Nenhum periódico com esses filtros. Tente ampliar.</div>';return;}
+  // Área de Avaliação obrigatória
+  if(!selAreas.size){
+    document.getElementById('results').innerHTML='<div class="err">⚠️ Selecione ao menos uma <strong>Área de Avaliação CAPES</strong> antes de buscar.</div>';
+    return;
+  }
 
-  const candidates=preFilter(pool,[t,a,k].filter(Boolean).join(' '),60);
+  const MAX_CANDIDATES = 80;
+  let pool=DB.filter(j=>(!selQ.size||selQ.has(j[2]))&&([...selAreas].some(sa=>j[3].includes(sa))));
+  if(!pool.length){document.getElementById('results').innerHTML='<div class="err">⚠️ Nenhum periódico com esses filtros. Tente ampliar.</div>';return;}
+  const candidates = pool.length > MAX_CANDIDATES ? pool.slice(0, MAX_CANDIDATES) : pool;
   const btn=document.getElementById('btn');
   btn.disabled=true;btn.innerHTML='⏳ &nbsp;Analisando com IA...';
-  document.getElementById('results').innerHTML=`<div class="loading"><div class="spinner"></div><p>Analisando <strong>${candidates.length}</strong> candidatos de ${pool.length.toLocaleString('pt-BR')} filtrados...</p></div>`;
+  document.getElementById('results').innerHTML=`<div class="loading"><div class="spinner"></div><p>Analisando <strong>${candidates.length}</strong> periódicos da área selecionada...</p></div>`;
 
   const list=candidates.map((j,i)=>`${i+1}. ${j[1]} | ISSN ${j[0]} | Qualis ${j[2]} | Áreas: ${j[3]}`).join('\n');
   const fi=[...selQ].map(q=>`Qualis ${q}`).concat([...selAreas]).join(', ');
