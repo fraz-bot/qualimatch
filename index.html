@@ -149,10 +149,7 @@
       <label>Abstract / Resumo</label>
       <textarea id="inp-a" placeholder="Cole aqui o abstract ou resumo. Português ou inglês."></textarea>
     </div>
-    <div class="field" style="margin-bottom:0">
-      <label>Palavras-chave</label>
-      <input type="text" id="inp-k" placeholder="Ex: aprendizado de máquina, saúde pública, irrigação...">
-    </div>
+
     <div class="ex-row">
       <span>Exemplos:</span>
       <button class="ex-btn" onclick="ex('saude')">Saúde coletiva</button>
@@ -223,7 +220,7 @@ const EX={
   agro:{t:"Efeito de diferentes lâminas de irrigação sobre a produtividade de milho no Cerrado",a:"Avaliou-se o efeito de cinco lâminas de irrigação sobre produtividade e eficiência do uso da água do híbrido BM3061 em Latossolo Vermelho-Amarelo. Produtividade máxima de 11,8 t/ha.",k:"irrigação deficitária, Zea mays, evapotranspiração, eficiência do uso da água, Cerrado"},
   educ:{t:"Formação continuada de professores e desempenho de alunos em escolas públicas brasileiras",a:"Analisou-se a relação entre formação continuada e desempenho no SAEB em 1.200 escolas por regressão multinível.",k:"formação de professores, educação básica, SAEB, políticas educacionais"},
 };
-function ex(k){const e=EX[k];document.getElementById('inp-t').value=e.t;document.getElementById('inp-a').value=e.a;document.getElementById('inp-k').value=e.k;}
+function ex(k){const e=EX[k];document.getElementById('inp-t').value=e.t;document.getElementById('inp-a').value=e.a;}
 
 // Pré-filtro por keyword removido — filtros de Área e Qualis garantem a precisão
 
@@ -232,8 +229,7 @@ async function search(){
   if(!DB.length){alert('Aguarde a base carregar...');return;}
   const t=document.getElementById('inp-t').value.trim();
   const a=document.getElementById('inp-a').value.trim();
-  const k=document.getElementById('inp-k').value.trim();
-  if(!t&&!a&&!k){document.getElementById('results').innerHTML='<div class="err">⚠️ Preencha ao menos o título ou abstract.</div>';return;}
+  if(!t&&!a){document.getElementById('results').innerHTML='<div class="err">⚠️ Preencha ao menos o título ou abstract.</div>';return;}
 
   // Área de Avaliação obrigatória
   if(!selAreas.size){
@@ -256,7 +252,7 @@ The article may be in Portuguese or English — handle both equally.
 ${fi?'Active filters: '+fi+'\n':''}ARTICLE:
 Title: ${t||'(not provided)'}
 Abstract: ${a||'(not provided)'}
-Keywords: ${k||'(not provided)'}
+
 
 CANDIDATE JOURNALS:
 ${list}
