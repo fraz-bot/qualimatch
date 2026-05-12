@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QualisMatch — Periódicos Qualis com IA</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',system-ui,sans-serif;background:#f4f6f4;color:#1a1a1a;min-height:100vh}
@@ -92,6 +93,39 @@
   .err{background:#fff5f5;border:1.5px solid #fca5a5;color:#991b1b;text-align:left}
   .footer{text-align:center;font-size:11px;color:#bbb;margin-top:24px;line-height:1.9}
   .footer a{color:#1D9E75;text-decoration:none}
+
+  /* Auth modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+  .modal-overlay.hidden{display:none}
+  .modal{background:white;border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+  .modal-logo{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .modal-logo h2{font-size:20px;font-weight:700;color:#0a4d3a}
+  .modal-logo h2 span{color:#1D9E75}
+  .modal-sub{font-size:13px;color:#888;margin-bottom:20px;line-height:1.5}
+  .modal-tabs{display:flex;border-bottom:2px solid #eee;margin-bottom:20px}
+  .modal-tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;color:#aaa;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+  .modal-tab.active{color:#0a4d3a;border-bottom-color:#0a4d3a}
+  .modal-field{margin-bottom:14px}
+  .modal-field label{display:block;font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+  .modal-field input{width:100%;padding:10px 14px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;font-family:inherit;transition:border-color .15s}
+  .modal-field input:focus{outline:none;border-color:#1D9E75}
+  .btn-auth{width:100%;padding:11px;background:#0F6E56;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;transition:background .15s}
+  .btn-auth:hover{background:#0a4d3a}
+  .btn-auth:disabled{background:#8ecfc3;cursor:not-allowed}
+  .divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:#ccc;font-size:12px}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:#eee}
+  .btn-google{width:100%;padding:10px;background:white;color:#444;border:1.5px solid #ddd;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s}
+  .btn-google:hover{border-color:#aaa;background:#fafafa}
+  .auth-msg{font-size:12px;margin-top:10px;text-align:center;min-height:16px}
+  .auth-msg.err{color:#dc2626}
+  .auth-msg.ok{color:#0F6E56}
+  .searches-bar{background:#fff8e1;border:1.5px solid #fde68a;border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#92400e}
+  .searches-bar.hidden{display:none}
+  .searches-bar strong{color:#92400e}
+  .searches-bar .btn-login-bar{font-size:12px;font-weight:600;color:#0F6E56;background:none;border:1.5px solid #0F6E56;padding:4px 12px;border-radius:99px;cursor:pointer}
+  .user-bar{background:#e8f5f0;border:1.5px solid #b2dfd0;border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#0a4d3a}
+  .user-bar.hidden{display:none}
+  .btn-logout{font-size:12px;color:#888;background:none;border:none;cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -100,6 +134,47 @@
   <h1>Qualis<span>Match</span></h1>
   <span class="db-badge" id="db-status">⏳ carregando...</span>
   <span class="tag">Qualis 2021-2024 · Beta</span>
+</div>
+
+<!-- Modal de autenticação -->
+<div class="modal-overlay hidden" id="auth-modal">
+  <div class="modal">
+    <div class="modal-logo"><span>🔬</span><h2>Qualis<span>Match</span></h2></div>
+    <p class="modal-sub">Você usou suas <strong>3 buscas gratuitas</strong>.<br>Crie uma conta grátis para continuar sem limites.</p>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab('cadastro')">Criar conta</div>
+      <div class="modal-tab" onclick="switchTab('login')">Já tenho conta</div>
+    </div>
+    <!-- Email/senha -->
+    <div id="tab-cadastro">
+      <div class="modal-field"><label>E-mail</label><input type="email" id="reg-email" placeholder="seu@email.com"></div>
+      <div class="modal-field"><label>Senha</label><input type="password" id="reg-pass" placeholder="mínimo 6 caracteres"></div>
+      <button class="btn-auth" id="btn-cadastro" onclick="doSignup()">Criar conta grátis</button>
+    </div>
+    <div id="tab-login" style="display:none">
+      <div class="modal-field"><label>E-mail</label><input type="email" id="log-email" placeholder="seu@email.com"></div>
+      <div class="modal-field"><label>Senha</label><input type="password" id="log-pass" placeholder="sua senha"></div>
+      <button class="btn-auth" id="btn-login" onclick="doLogin()">Entrar</button>
+    </div>
+    <p class="auth-msg" id="auth-msg"></p>
+    <div class="divider">ou</div>
+    <button class="btn-google" onclick="doGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continuar com Google
+    </button>
+  </div>
+</div>
+
+<!-- Barra de buscas restantes (usuário não logado) -->
+<div class="searches-bar hidden" id="searches-bar">
+  <span>🔍 <strong id="searches-left">3</strong> busca(s) gratuita(s) restante(s)</span>
+  <button class="btn-login-bar" onclick="showModal()">Criar conta grátis</button>
+</div>
+
+<!-- Barra de usuário logado -->
+<div class="user-bar hidden" id="user-bar">
+  <span>✅ Logado como <strong id="user-email-display"></strong></span>
+  <button class="btn-logout" onclick="doLogout()">Sair</button>
 </div>
 
 <div class="container">
@@ -227,6 +302,7 @@ function ex(k){const e=EX[k];document.getElementById('inp-t').value=e.t;document
 // ── Busca ──────────────────────────────────────────────────────
 async function search(){
   if(!DB.length){alert('Aguarde a base carregar...');return;}
+  if(!canSearch()) return;
   const t=document.getElementById('inp-t').value.trim();
   const a=document.getElementById('inp-a').value.trim();
   if(!t&&!a){document.getElementById('results').innerHTML='<div class="err">⚠️ Preencha ao menos o título ou abstract.</div>';return;}
@@ -300,6 +376,7 @@ i=index 1-${candidates.length}, s=0-100, include ALL journals with s>=40, NO max
     const txt2=d2.content.find(b=>b.type==='text')?.text||'';
     const m2=txt2.replace(/```json/gi,'').replace(/```/g,'').trim().match(/\{[\s\S]*\}/);
     if(!m2)throw new Error('Erro no match. Tente novamente.');
+    registerSearch();
     render(JSON.parse(m2[0]),candidates,perfil);
   }catch(e){
     document.getElementById('results').innerHTML=`<div class="err">❌ ${e.message}</div>`;
@@ -336,6 +413,119 @@ function render(parsed,candidates,perfil){
   });
   document.getElementById('results').innerHTML=html;
 }
+</script>
+<script>
+// ── Supabase Auth ────────────────────────────────────────────────
+const { createClient } = supabase;
+const sb = createClient('https://zubvtcqqfoydcogzmriw.supabase.co', 'sb_publishable_YcKkdEibYKr9fShWzpyn5w_L7SzqtQM');
+
+const FREE_LIMIT = 3;
+let currentUser = null;
+let searchCount = parseInt(localStorage.getItem('qm_searches') || '0');
+
+// Inicializar estado de auth
+async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if(session?.user) setUser(session.user);
+  else updateSearchBar();
+
+  sb.auth.onAuthStateChange((_event, session) => {
+    if(session?.user) setUser(session.user);
+    else { currentUser=null; updateSearchBar(); }
+  });
+}
+
+function setUser(user) {
+  currentUser = user;
+  document.getElementById('user-bar').classList.remove('hidden');
+  document.getElementById('searches-bar').classList.add('hidden');
+  document.getElementById('user-email-display').textContent = user.email;
+  document.getElementById('auth-modal').classList.add('hidden');
+}
+
+function updateSearchBar() {
+  const left = Math.max(0, FREE_LIMIT - searchCount);
+  if(left <= 0) {
+    document.getElementById('searches-bar').classList.remove('hidden');
+    document.getElementById('searches-left').textContent = '0';
+  } else if(searchCount > 0) {
+    document.getElementById('searches-bar').classList.remove('hidden');
+    document.getElementById('searches-left').textContent = left;
+  }
+}
+
+function canSearch() {
+  if(currentUser) return true;
+  if(searchCount < FREE_LIMIT) return true;
+  showModal(); return false;
+}
+
+function registerSearch() {
+  if(!currentUser) {
+    searchCount++;
+    localStorage.setItem('qm_searches', searchCount);
+    updateSearchBar();
+  }
+}
+
+// Modal
+function showModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
+function hideModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+document.getElementById('auth-modal').addEventListener('click', e => {
+  if(e.target === document.getElementById('auth-modal')) hideModal();
+});
+
+function switchTab(tab) {
+  document.getElementById('tab-cadastro').style.display = tab==='cadastro'?'block':'none';
+  document.getElementById('tab-login').style.display = tab==='login'?'block':'none';
+  document.querySelectorAll('.modal-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='cadastro')||(i===1&&tab==='login')));
+  document.getElementById('auth-msg').textContent='';
+}
+
+function setAuthMsg(msg, type='err') {
+  const el = document.getElementById('auth-msg');
+  el.textContent = msg; el.className = 'auth-msg '+type;
+}
+
+async function doSignup() {
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  if(!email||!pass) return setAuthMsg('Preencha e-mail e senha.');
+  if(pass.length < 6) return setAuthMsg('Senha precisa ter ao menos 6 caracteres.');
+  document.getElementById('btn-cadastro').disabled=true;
+  const { error } = await sb.auth.signUp({ email, password:pass });
+  document.getElementById('btn-cadastro').disabled=false;
+  if(error) return setAuthMsg(error.message);
+  setAuthMsg('✅ Conta criada! Verifique seu e-mail para confirmar.','ok');
+}
+
+async function doLogin() {
+  const email = document.getElementById('log-email').value.trim();
+  const pass  = document.getElementById('log-pass').value;
+  if(!email||!pass) return setAuthMsg('Preencha e-mail e senha.');
+  document.getElementById('btn-login').disabled=true;
+  const { error } = await sb.auth.signInWithPassword({ email, password:pass });
+  document.getElementById('btn-login').disabled=false;
+  if(error) return setAuthMsg('E-mail ou senha incorretos.');
+}
+
+async function doGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{ redirectTo: window.location.origin }
+  });
+  if(error) setAuthMsg(error.message);
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser=null;
+  document.getElementById('user-bar').classList.add('hidden');
+  searchCount=0; localStorage.setItem('qm_searches','0');
+  updateSearchBar();
+}
+
+window.addEventListener('load', initAuth);
 </script>
 </body>
 </html>
