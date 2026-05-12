@@ -264,7 +264,7 @@ i=índice(1-${candidates.length}), s=0-100, apenas s>=55, máx 7, ordem decresce
 
   try{
     const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     if(!res.ok)throw new Error(data.error?.message||`Erro ${res.status}`);
     const txt=data.content.find(b=>b.type==='text')?.text||'';
