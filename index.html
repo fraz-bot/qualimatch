@@ -252,15 +252,19 @@ async function search(){
 
   const list=candidates.map((j,i)=>`${i+1}. ${j[1]} | ISSN ${j[0]} | Qualis ${j[2]} | Áreas: ${j[3]}`).join('\n');
   const fi=[...selQ].map(q=>`Qualis ${q}`).concat([...selAreas]).join(', ');
-  const prompt=`Especialista em publicação científica brasileira e Qualis CAPES.${fi?'\nFiltros: '+fi:''}
-ARTIGO:
-Título: ${t||'(não informado)'}
-Abstract: ${a||'(não informado)'}
-Palavras-chave: ${k||'(não informado)'}
-CANDIDATOS:
+  const prompt=`You are an expert in Brazilian academic publishing and the Qualis CAPES system.
+The article may be in Portuguese or English — handle both equally.
+${fi?'Active filters: '+fi+'\n':''}ARTICLE:
+Title: ${t||'(not provided)'}
+Abstract: ${a||'(not provided)'}
+Keywords: ${k||'(not provided)'}
+
+CANDIDATE JOURNALS:
 ${list}
-Retorne APENAS JSON: {"resumo":"tema em uma frase","resultados":[{"i":1,"s":92,"m":"2-3 frases sobre adequação"}]}
-i=índice(1-${candidates.length}), s=0-100, apenas s>=55, máx 7, ordem decrescente.`;
+
+Respond with ONLY a raw JSON object, no markdown, no code fences, no extra text:
+{"resumo":"tema do artigo em português","resultados":[{"i":1,"s":92,"m":"2-3 frases em português sobre adequação"}]}
+i=index 1-${candidates.length}, s=0-100, only s>=55, max 7, descending order. Always write resumo and m in Portuguese.`;
 
   try{
     const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -268,7 +272,14 @@ i=índice(1-${candidates.length}), s=0-100, apenas s>=55, máx 7, ordem decresce
     const data=await res.json();
     if(!res.ok)throw new Error(data.error?.message||`Erro ${res.status}`);
     const txt=data.content.find(b=>b.type==='text')?.text||'';
-    render(JSON.parse(txt.replace(/```json|```/g,'').trim()),candidates);
+    // Extração robusta de JSON
+    let jsonStr = txt;
+    // Remove markdown code blocks
+    jsonStr = jsonStr.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    // Tenta encontrar o objeto JSON dentro do texto
+    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error('Resposta da IA não continha JSON válido. Tente novamente.');
+    render(JSON.parse(jsonMatch[0]), candidates);
   }catch(e){
     document.getElementById('results').innerHTML=`<div class="err">❌ ${e.message}</div>`;
   }finally{
