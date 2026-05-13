@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QualisMatch — Periódicos Qualis com IA</title>
+<title>QualisMatch — Busca Inteligente de Periódicos Qualis</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -133,7 +133,16 @@
   <span>🔬</span>
   <h1>Qualis<span>Match</span></h1>
   <span class="db-badge" id="db-status">⏳ carregando...</span>
-  <span class="tag">Qualis 2021-2024 · Beta</span>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+    <div id="topbar-auth">
+      <button onclick="showModal()" style="font-size:12px;padding:5px 14px;background:rgba(255,255,255,.15);color:white;border:1.5px solid rgba(255,255,255,.3);border-radius:99px;cursor:pointer;font-weight:600" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">Entrar / Cadastrar</button>
+    </div>
+    <div id="topbar-user" style="display:none;align-items:center;gap:8px">
+      <span style="font-size:12px;color:#9FE1CB" id="topbar-email"></span>
+      <button onclick="doLogout()" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.2);border-radius:99px;cursor:pointer">Sair</button>
+    </div>
+    <span class="tag">Beta</span>
+  </div>
 </div>
 
 <!-- Modal de autenticação -->
@@ -178,7 +187,7 @@
 </div>
 
 <div class="container">
-  <p class="subtitle">Cole os dados do seu artigo, ajuste os filtros e a IA encontra os melhores periódicos do <strong>Qualis CAPES 2021-2024</strong> para submissão.</p>
+  <p class="subtitle">Busca inteligente de periódicos acadêmicos. Cole o resumo do seu artigo, selecione a área e encontre as melhores revistas do <strong>Qualis CAPES 2021-2024</strong> para submissão.</p>
 
   <div class="card">
     <div class="card-title">🎯 Filtros</div>
@@ -232,7 +241,7 @@
       <button class="ex-btn" onclick="ex('agro')">Agronomia</button>
       <button class="ex-btn" onclick="ex('educ')">Educação</button>
     </div>
-    <button class="btn-search" id="btn" onclick="search()">🔍 &nbsp;Encontrar periódicos compatíveis</button>
+    <button class="btn-search" id="btn" onclick="search()">🔍 &nbsp;Buscar periódicos compatíveis</button>
   </div>
 
   <div id="results"></div>
@@ -340,7 +349,7 @@ async function search(){
   if(!pool.length){document.getElementById('results').innerHTML='<div class="err">⚠️ Nenhum periódico com esses filtros. Tente ampliar.</div>';return;}
   const candidates = pool.length > MAX_CANDIDATES ? pool.slice(0, MAX_CANDIDATES) : pool;
   const btn=document.getElementById('btn');
-  btn.disabled=true;btn.innerHTML='⏳ &nbsp;Analisando com IA...';
+  btn.disabled=true;btn.innerHTML='⏳ &nbsp;Analisando...';
   document.getElementById('results').innerHTML=`<div class="loading"><div class="spinner"></div><p>Analisando <strong>${candidates.length}</strong> periódicos da área selecionada...</p></div>`;
 
   const list=candidates.map((j,i)=>`${i+1}. ${j[1]} | ISSN ${j[0]} | Qualis ${j[2]} | Áreas: ${j[3]}`).join('\n');
@@ -403,7 +412,7 @@ i=index 1-${candidates.length}, s=0-100, include ALL journals with s>=40, NO max
   }catch(e){
     document.getElementById('results').innerHTML=`<div class="err">❌ ${e.message}</div>`;
   }finally{
-    btn.disabled=false;btn.innerHTML='🔍 &nbsp;Encontrar periódicos compatíveis';
+    btn.disabled=false;btn.innerHTML='🔍 &nbsp;Buscar periódicos compatíveis';
   }}
 
 function render(parsed,candidates,perfil){
@@ -415,7 +424,7 @@ function render(parsed,candidates,perfil){
   // Card de perfil do artigo extraído na Etapa 1
   const perfilCard = perfil ? `
   <div style="background:#f0faf6;border:1.5px solid #b2dfd0;border-radius:12px;padding:14px 18px;margin-bottom:14px">
-    <div style="font-size:11px;font-weight:700;color:#0a4d3a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">🧠 Perfil do artigo identificado pela IA</div>
+    <div style="font-size:11px;font-weight:700;color:#0a4d3a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">🧠 Perfil do artigo identificado</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px">
       <div><span style="font-size:11px;color:#888">Área principal</span><div style="font-size:13px;font-weight:600;color:#1a1a1a">${perfil.area_principal||'—'}</div></div>
       <div><span style="font-size:11px;color:#888">Subárea</span><div style="font-size:13px;color:#1a1a1a">${perfil.subarea||'—'}</div></div>
@@ -463,6 +472,10 @@ function setUser(user) {
   document.getElementById('searches-bar').classList.add('hidden');
   document.getElementById('user-email-display').textContent = user.email;
   document.getElementById('auth-modal').classList.add('hidden');
+  // Topbar
+  document.getElementById('topbar-auth').style.display = 'none';
+  document.getElementById('topbar-user').style.display = 'flex';
+  document.getElementById('topbar-email').textContent = user.email;
 }
 
 function updateSearchBar() {
@@ -543,6 +556,8 @@ async function doLogout() {
   await sb.auth.signOut();
   currentUser=null;
   document.getElementById('user-bar').classList.add('hidden');
+  document.getElementById('topbar-auth').style.display = 'block';
+  document.getElementById('topbar-user').style.display = 'none';
   searchCount=0; localStorage.setItem('qm_searches','0');
   updateSearchBar();
 }
