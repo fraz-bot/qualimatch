@@ -246,21 +246,17 @@ async function loadDB() {
   try {
     document.getElementById('db-status').textContent = '⏳ carregando base...';
     const resp = await fetch('/data/qualis');
-    const b64 = await resp.text();
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const b64 = (await resp.text()).trim(); // trim remove espaços/quebras de linha
     const bin = atob(b64);
     const bytes = new Uint8Array(bin.length);
-    for (let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
-    DB = JSON.parse(pako.inflate(bytes,{to:'string'}));
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    DB = JSON.parse(pako.inflate(bytes, {to: 'string'}));
     document.getElementById('db-status').textContent = `✅ ${DB.length.toLocaleString('pt-BR')} periódicos`;
   } catch(e) {
-    document.getElementById('db-status').textContent = '❌ erro ao carregar base';
-    console.error(e);
+    console.error('Erro ao carregar base:', e);
+    document.getElementById('db-status').textContent = '❌ erro: ' + e.message;
   }
-}
-const ALL_AREAS = ["ADMINISTRAÇÃO PÚBLICA E DE EMPRESAS, CIÊNCIAS CONTÁBEIS E TURISMO", "ANTROPOLOGIA / ARQUEOLOGIA", "ARQUITETURA, URBANISMO E DESIGN", "ARTES", "ASTRONOMIA / FÍSICA", "BIODIVERSIDADE", "BIOTECNOLOGIA", "CIÊNCIA DE ALIMENTOS", "CIÊNCIA POLÍTICA E RELAÇÕES INTERNACIONAIS", "CIÊNCIAS AGRÁRIAS I", "CIÊNCIAS AMBIENTAIS", "CIÊNCIAS BIOLÓGICAS I", "CIÊNCIAS BIOLÓGICAS II", "CIÊNCIAS BIOLÓGICAS III", "CIÊNCIAS DA RELIGIÃO E TEOLOGIA", "CIÊNCIAS E HUMANIDADES PARA A EDUCAÇÃO BÁSICA", "COMPUTAÇÃO", "COMUNICAÇÃO E INFORMAÇÃO E MUSEOLOGIA", "DIREITO", "ECONOMIA", "EDUCAÇÃO", "EDUCAÇÃO FÍSICA, FISIOTERAPIA, FONOAUDIOLOGIA E TERAPIA OCUPACIONAL", "ENFERMAGEM", "ENGENHARIAS I", "ENGENHARIAS II", "ENGENHARIAS III", "ENGENHARIAS IV", "ENSINO", "FARMÁCIA", "FILOSOFIA", "GEOCIÊNCIAS", "GEOGRAFIA", "HISTÓRIA", "INTERDISCIPLINAR", "LINGUÍSTICA E LITERATURA", "MATEMÁTICA / PROBABILIDADE E ESTATÍSTICA", "MATERIAIS", "MEDICINA I", "MEDICINA II", "MEDICINA III", "MEDICINA VETERINÁRIA", "NUTRIÇÃO", "ODONTOLOGIA", "PLANEJAMENTO URBANO E REGIONAL / DEMOGRAFIA", "PSICOLOGIA", "QUÍMICA", "SAÚDE COLETIVA", "SERVIÇO SOCIAL", "SOCIOLOGIA", "ZOOTECNIA / RECURSOS PESQUEIROS"];
-let DB = [];
-
-// loadDB definida acima
 }
 window.addEventListener('load',loadDB);
 
