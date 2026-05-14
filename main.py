@@ -12,8 +12,14 @@ def index():
 
 @app.route("/data/qualis")
 def qualis_data():
-    path = os.path.join(BASE_DIR, "qualis_data.b64")
-    with open(path, "r") as f:
+    with open(os.path.join(BASE_DIR, "qualis_data.b64"), "r") as f:
+        data = f.read()
+    return Response(data, mimetype="text/plain",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+@app.route("/data/sjr")
+def sjr_data():
+    with open(os.path.join(BASE_DIR, "sjr_data.b64"), "r") as f:
         data = f.read()
     return Response(data, mimetype="text/plain",
                     headers={"Cache-Control": "public, max-age=86400"})
@@ -37,10 +43,9 @@ def match():
 
 @app.route("/health")
 def health():
-    # Verifica se os arquivos existem
-    files = ["index.html", "qualis_data.b64"]
+    files = ["index.html", "qualis_data.b64", "sjr_data.b64"]
     status = {f: os.path.exists(os.path.join(BASE_DIR, f)) for f in files}
-    return jsonify({"ok": True, "files": status, "base_dir": BASE_DIR})
+    return jsonify({"ok": True, "files": status})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
