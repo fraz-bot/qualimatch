@@ -360,7 +360,7 @@ The article may be in Portuguese or English.
 
 ARTICLE:
 Title: ${t||'(not provided)'}
-Abstract: ${a||'(not provided)'}
+Abstract: ${a ? a.substring(0,1500) : '(not provided)'}
 
 Respond with ONLY a raw JSON object, no markdown, no code fences:
 {"area_principal":"main area in Portuguese","subarea":"specific topic in Portuguese","objeto_estudo":"object of study in Portuguese","abordagem":"quantitativa|qualitativa|mista|revisão|experimental","metodologia":"main method in Portuguese","contexto":"geographic or institutional context in Portuguese","resumo":"one sentence in Portuguese"}`;
@@ -405,10 +405,24 @@ i=index 1-${candidates.length}, s=0-100, include ALL journals with s>=40, NO max
     const d2=await r2.json();
     if(!r2.ok)throw new Error(d2.error?.message||`Erro ${r2.status}`);
     const txt2=d2.content.find(b=>b.type==='text')?.text||'';
-    const m2=txt2.replace(/```json/gi,'').replace(/```/g,'').trim().match(/\{[\s\S]*\}/);
-    if(!m2)throw new Error('Erro no match. Tente novamente.');
+    const clean2=txt2.replace(/```json/gi,'').replace(/```/g,'').trim();
+    const m2=clean2.match(/\{[\s\S]*\}/);
+    if(!m2) throw new Error('Tente novamente — resposta fora do formato esperado.');
+    let jsonStr2=m2[0];
+    let parsed2;
+    try {
+      parsed2=JSON.parse(jsonStr2);
+    } catch(parseErr) {
+      // JSON truncado: remove última entrada incompleta e fecha
+      jsonStr2=jsonStr2.replace(/,\s*\{[^}]*$/,'');
+      const needBracket=(jsonStr2.match(/\[/g)||[]).length-(jsonStr2.match(/\]/g)||[]).length;
+      const needBrace=(jsonStr2.match(/\{/g)||[]).length-(jsonStr2.match(/\}/g)||[]).length;
+      jsonStr2+=']'.repeat(Math.max(0,needBracket))+'}'.repeat(Math.max(0,needBrace));
+      try { parsed2=JSON.parse(jsonStr2); }
+      catch(e2) { throw new Error('Abstract muito longo causou erro. Tente reduzir o resumo e buscar novamente.'); }
+    }
     registerSearch();
-    render(JSON.parse(m2[0]),candidates,perfil);
+    render(parsed2,candidates,perfil);
   }catch(e){
     document.getElementById('results').innerHTML=`<div class="err">❌ ${e.message}</div>`;
   }finally{
