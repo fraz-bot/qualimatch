@@ -341,6 +341,7 @@ async function search(){
   const t=document.getElementById('inp-t').value.trim();
   const a=document.getElementById('inp-a').value.trim();
   if(!t&&!a){document.getElementById('results').innerHTML='<div class="err">⚠️ Preencha ao menos o título ou abstract.</div>';return;}
+  if(t && !a && t.length > 400){document.getElementById('results').innerHTML='<div class="err">⚠️ Título muito longo detectado. Para melhor resultado, cole também o <strong>abstract</strong> do artigo.</div>';return;}
 
   // Área de Avaliação obrigatória
   if(!selAreas.size){
@@ -363,7 +364,7 @@ async function search(){
 The article may be in Portuguese or English.
 
 ARTICLE:
-Title: ${t||'(not provided)'}
+Title: ${t ? t.substring(0,500) : '(not provided)'}
 Abstract: ${a ? a.substring(0,1500) : '(not provided)'}
 
 Respond with ONLY a raw JSON object, no markdown, no code fences:
@@ -423,7 +424,7 @@ i=index 1-${candidates.length}, s=0-100, include ALL journals with s>=40, NO max
       const needBrace=(jsonStr2.match(/\{/g)||[]).length-(jsonStr2.match(/\}/g)||[]).length;
       jsonStr2+=']'.repeat(Math.max(0,needBracket))+'}'.repeat(Math.max(0,needBrace));
       try { parsed2=JSON.parse(jsonStr2); }
-      catch(e2) { throw new Error('Abstract muito longo causou erro. Tente reduzir o resumo e buscar novamente.'); }
+      catch(e2) { throw new Error('Erro na análise. Se o título ou resumo for muito longo, tente reduzir e buscar novamente.'); }
     }
     registerSearch();
     render(parsed2,candidates,perfil);
