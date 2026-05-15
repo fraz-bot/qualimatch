@@ -47,6 +47,7 @@ def refs():
     if not query:
         return jsonify({"error": "query obrigatória"}), 400
     try:
+        S2_KEY = os.environ.get("S2_API_KEY", "s2k-t2OHFJl3roFmaPLMPqg3iaQfPN3MdRjr5vB98Ojq")
         resp = requests.get(
             "https://api.semanticscholar.org/graph/v1/paper/search",
             params={
@@ -54,7 +55,7 @@ def refs():
                 "fields": "title,authors,year,abstract,externalIds,openAccessPdf,citationCount",
                 "limit": 20
             },
-            headers={"User-Agent": "QualisMatch/1.0"},
+            headers={"User-Agent": "QualisMatch/1.0", "x-api-key": S2_KEY},
             timeout=15
         )
         return jsonify(resp.json()), resp.status_code
