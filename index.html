@@ -645,8 +645,6 @@ async function doLogout() {
 window.addEventListener('load', initAuth);
 </script>
 
-<script>
-
 </div><!-- /tab-match -->
 
 <div id="tab-refs" style="display:none">
@@ -665,7 +663,6 @@ window.addEventListener('load', initAuth);
   <div id="ref-results"></div>
 </div>
 
-
 <script>
 function switchMainTab(tab, el) {
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
@@ -681,14 +678,14 @@ async function buscarRefs() {
   var resDiv = document.getElementById('ref-results');
 
   if (query.length < 10) {
-    resDiv.innerHTML = '<div class="err">⚠️ Preencha ao menos o título ou abstract.</div>';
+    resDiv.innerHTML = '<div class="err">Preencha ao menos o titulo ou abstract.</div>';
     return;
   }
 
   var btn = document.querySelector('#tab-refs .btn');
   btn.disabled = true;
-  btn.textContent = '⏳ Buscando...';
-  resDiv.innerHTML = '<div style="text-align:center;padding:32px;color:#6b7280">Consultando base de artigos científicos...</div>';
+  btn.textContent = 'Buscando...';
+  resDiv.innerHTML = '<div style="text-align:center;padding:32px;color:#6b7280">Consultando base de artigos cientificos...</div>';
 
   try {
     var q = encodeURIComponent(query.substring(0, 200));
@@ -699,11 +696,11 @@ async function buscarRefs() {
     var papers = data.data || [];
 
     if (!papers.length) {
-      resDiv.innerHTML = '<div class="err">⚠️ Nenhuma referência encontrada. Tente reformular o abstract.</div>';
+      resDiv.innerHTML = '<div class="err">Nenhuma referencia encontrada. Tente reformular o abstract.</div>';
       return;
     }
 
-    var out = '<div style="font-size:13px;color:#6b7280;margin-bottom:16px">' + papers.length + ' referências encontradas via Semantic Scholar</div>';
+    var out = '<div style="font-size:13px;color:#6b7280;margin-bottom:16px">' + papers.length + ' referencias encontradas via Semantic Scholar</div>';
 
     papers.forEach(function(p, i) {
       var doi    = (p.externalIds && p.externalIds.DOI) ? p.externalIds.DOI : '';
@@ -711,20 +708,20 @@ async function buscarRefs() {
       var pdfUrl = (p.openAccessPdf && p.openAccessPdf.url) ? p.openAccessPdf.url : '';
       var authors = p.authors || [];
       var autores = authors.slice(0,3).map(function(a){ return a.name; }).join(', ') + (authors.length > 3 ? ' et al.' : '');
-      var absTxt  = p.abstract ? p.abstract.substring(0,300) + '…' : '';
+      var absTxt  = p.abstract ? p.abstract.substring(0,300) + '...' : '';
 
       var titleHtml = doiUrl
         ? '<a href="' + doiUrl + '" target="_blank">' + (i+1) + '. ' + p.title + '</a>'
         : (i+1) + '. ' + p.title;
 
       var badges = '';
-      if (p.citationCount) badges += '<span class="ref-badge cite">📊 ' + p.citationCount.toLocaleString('pt-BR') + ' citações</span>';
+      if (p.citationCount) badges += '<span class="ref-badge cite">📊 ' + p.citationCount.toLocaleString('pt-BR') + ' citacoes</span>';
       if (pdfUrl) badges += '<a href="' + pdfUrl + '" target="_blank" class="ref-badge oa">📄 PDF gratuito</a>';
       if (doi)    badges += '<span class="ref-badge doi">DOI: ' + doi + '</span>';
 
       out += '<div class="ref-card">'
            + '<div class="ref-title">' + titleHtml + '</div>'
-           + '<div class="ref-meta">' + autores + (autores && p.year ? ' · ' : '') + (p.year || '') + '</div>'
+           + '<div class="ref-meta">' + autores + (autores && p.year ? ' - ' : '') + (p.year || '') + '</div>'
            + (absTxt ? '<div class="ref-abstract">' + absTxt + '</div>' : '')
            + '<div class="ref-badges">' + badges + '</div>'
            + '</div>';
@@ -732,10 +729,10 @@ async function buscarRefs() {
 
     resDiv.innerHTML = out;
   } catch(e) {
-    resDiv.innerHTML = '<div class="err">❌ Erro ao buscar referências: ' + e.message + '</div>';
+    resDiv.innerHTML = '<div class="err">Erro ao buscar referencias: ' + e.message + '</div>';
   } finally {
     btn.disabled = false;
-    btn.textContent = '📚 Buscar referências relacionadas';
+    btn.textContent = '📚 Buscar referencias relacionadas';
   }
 }
 </script>
