@@ -645,23 +645,6 @@ async function doLogout() {
 window.addEventListener('load', initAuth);
 </script>
 
-<!-- Seção Referências -->
-<div id="tab-refs" style="display:none">
-  <div class="card">
-    <div class="card-title">📄 DADOS DO ARTIGO</div>
-    <div class="field">
-      <label>TÍTULO</label>
-      <input type="text" id="ref-titulo" placeholder="Ex: Deep learning applied to power systems..." maxlength="300">
-    </div>
-    <div class="field">
-      <label>ABSTRACT / RESUMO</label>
-      <textarea id="ref-abstract" rows="6" placeholder="Cole aqui o abstract ou resumo. Português ou inglês."></textarea>
-    </div>
-    <button class="btn" onclick="buscarRefs()">📚 Buscar referências relacionadas</button>
-  </div>
-  <div id="ref-results"></div>
-</div>
-
 <script>
 function switchMainTab(tab, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -728,6 +711,23 @@ async function buscarRefs() {
 }
 </script>
 
+</div><!-- /tab-match -->
+
+<div id="tab-refs" style="display:none">
+  <div class="card">
+    <div class="card-title">📄 DADOS DO ARTIGO</div>
+    <div class="field">
+      <label>TÍTULO</label>
+      <input type="text" id="ref-titulo" placeholder="Ex: Deep learning applied to power systems..." maxlength="300">
+    </div>
+    <div class="field">
+      <label>ABSTRACT / RESUMO</label>
+      <textarea id="ref-abstract" rows="6" placeholder="Cole aqui o abstract ou resumo. Português ou inglês."></textarea>
+    </div>
+    <button class="btn" onclick="buscarRefs()">📚 Buscar referências relacionadas</button>
+  </div>
+  <div id="ref-results"></div>
+</div>
+
 </body>
-</html</div>
->
+</html>
