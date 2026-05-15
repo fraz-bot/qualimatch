@@ -646,70 +646,6 @@ window.addEventListener('load', initAuth);
 </script>
 
 <script>
-function switchMainTab(tab, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-refs').style.display = tab === 'refs' ? 'block' : 'none';
-  document.getElementById('tab-match').style.display = tab === 'match' ? 'block' : 'none';
-}
-
-async function buscarRefs() {
-  const titulo = (document.getElementById('ref-titulo').value || '').trim();
-  const abst   = (document.getElementById('ref-abstract').value || '').trim();
-  const query  = (titulo + ' ' + abst).substring(0, 300).trim();
-  const resDiv = document.getElementById('ref-results');
-
-  if (query.length < 10) {
-    resDiv.innerHTML = '<div class="err">⚠️ Preencha ao menos o título ou abstract.</div>';
-    return;
-  }
-
-  const btn = document.querySelector('#tab-refs .btn');
-  btn.disabled = true; btn.textContent = '⏳ Buscando...';
-  resDiv.innerHTML = '<div style="text-align:center;padding:32px;color:#6b7280">Consultando base de artigos científicos...</div>';
-
-  try {
-    const q   = encodeURIComponent(query.substring(0, 200));
-    const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&fields=title,authors,year,abstract,externalIds,openAccessPdf,citationCount&limit=20`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('Erro na API (' + resp.status + ')');
-    const data   = await resp.json();
-    const papers = data.data || [];
-
-    if (!papers.length) {
-      resDiv.innerHTML = '<div class="err">⚠️ Nenhuma referência encontrada. Tente reformular o abstract.</div>';
-      return;
-    }
-
-    let out = `<div style="font-size:13px;color:#6b7280;margin-bottom:16px">${papers.length} referências encontradas via Semantic Scholar</div>`;
-
-    papers.forEach((p, i) => {
-      const doi     = p.externalIds?.DOI || '';
-      const doiUrl  = doi ? 'https://doi.org/' + doi : '';
-      const pdfUrl  = p.openAccessPdf?.url || '';
-      const autores = (p.authors || []).slice(0,3).map(a => a.name).join(', ') + ((p.authors||[]).length > 3 ? ' et al.' : '');
-      const absTxt  = p.abstract ? p.abstract.substring(0,300) + '…' : '';
-
-      out += \`<div class="ref-card">
-        <div class="ref-title">\${doiUrl ? \`<a href="\${doiUrl}" target="_blank">\${i+1}. \${p.title}</a>\` : \`\${i+1}. \${p.title}\`}</div>
-        <div class="ref-meta">\${autores}\${autores && p.year ? ' · ' : ''}\${p.year || ''}</div>
-        \${absTxt ? \`<div class="ref-abstract">\${absTxt}</div>\` : ''}
-        <div class="ref-badges">
-          \${p.citationCount ? \`<span class="ref-badge cite">📊 \${p.citationCount.toLocaleString('pt-BR')} citações</span>\` : ''}
-          \${pdfUrl ? \`<a href="\${pdfUrl}" target="_blank" class="ref-badge oa">📄 PDF gratuito</a>\` : ''}
-          \${doi ? \`<span class="ref-badge doi">DOI: \${doi}</span>\` : ''}
-        </div>
-      </div>\`;
-    });
-
-    resDiv.innerHTML = out;
-  } catch(e) {
-    resDiv.innerHTML = '<div class="err">❌ Erro ao buscar referências: ' + e.message + '</div>';
-  } finally {
-    btn.disabled = false; btn.textContent = '📚 Buscar referências relacionadas';
-  }
-}
-</script>
 
 </div><!-- /tab-match -->
 
@@ -728,6 +664,81 @@ async function buscarRefs() {
   </div>
   <div id="ref-results"></div>
 </div>
+
+
+<script>
+function switchMainTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('tab-refs').style.display = (tab === 'refs') ? 'block' : 'none';
+  document.getElementById('tab-match').style.display = (tab === 'match') ? 'block' : 'none';
+}
+
+async function buscarRefs() {
+  var titulo = (document.getElementById('ref-titulo').value || '').trim();
+  var abst   = (document.getElementById('ref-abstract').value || '').trim();
+  var query  = (titulo + ' ' + abst).substring(0, 300).trim();
+  var resDiv = document.getElementById('ref-results');
+
+  if (query.length < 10) {
+    resDiv.innerHTML = '<div class="err">⚠️ Preencha ao menos o título ou abstract.</div>';
+    return;
+  }
+
+  var btn = document.querySelector('#tab-refs .btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Buscando...';
+  resDiv.innerHTML = '<div style="text-align:center;padding:32px;color:#6b7280">Consultando base de artigos científicos...</div>';
+
+  try {
+    var q = encodeURIComponent(query.substring(0, 200));
+    var url = 'https://api.semanticscholar.org/graph/v1/paper/search?query=' + q + '&fields=title,authors,year,abstract,externalIds,openAccessPdf,citationCount&limit=20';
+    var resp = await fetch(url);
+    if (!resp.ok) throw new Error('Erro na API (' + resp.status + ')');
+    var data = await resp.json();
+    var papers = data.data || [];
+
+    if (!papers.length) {
+      resDiv.innerHTML = '<div class="err">⚠️ Nenhuma referência encontrada. Tente reformular o abstract.</div>';
+      return;
+    }
+
+    var out = '<div style="font-size:13px;color:#6b7280;margin-bottom:16px">' + papers.length + ' referências encontradas via Semantic Scholar</div>';
+
+    papers.forEach(function(p, i) {
+      var doi    = (p.externalIds && p.externalIds.DOI) ? p.externalIds.DOI : '';
+      var doiUrl = doi ? 'https://doi.org/' + doi : '';
+      var pdfUrl = (p.openAccessPdf && p.openAccessPdf.url) ? p.openAccessPdf.url : '';
+      var authors = p.authors || [];
+      var autores = authors.slice(0,3).map(function(a){ return a.name; }).join(', ') + (authors.length > 3 ? ' et al.' : '');
+      var absTxt  = p.abstract ? p.abstract.substring(0,300) + '…' : '';
+
+      var titleHtml = doiUrl
+        ? '<a href="' + doiUrl + '" target="_blank">' + (i+1) + '. ' + p.title + '</a>'
+        : (i+1) + '. ' + p.title;
+
+      var badges = '';
+      if (p.citationCount) badges += '<span class="ref-badge cite">📊 ' + p.citationCount.toLocaleString('pt-BR') + ' citações</span>';
+      if (pdfUrl) badges += '<a href="' + pdfUrl + '" target="_blank" class="ref-badge oa">📄 PDF gratuito</a>';
+      if (doi)    badges += '<span class="ref-badge doi">DOI: ' + doi + '</span>';
+
+      out += '<div class="ref-card">'
+           + '<div class="ref-title">' + titleHtml + '</div>'
+           + '<div class="ref-meta">' + autores + (autores && p.year ? ' · ' : '') + (p.year || '') + '</div>'
+           + (absTxt ? '<div class="ref-abstract">' + absTxt + '</div>' : '')
+           + '<div class="ref-badges">' + badges + '</div>'
+           + '</div>';
+    });
+
+    resDiv.innerHTML = out;
+  } catch(e) {
+    resDiv.innerHTML = '<div class="err">❌ Erro ao buscar referências: ' + e.message + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📚 Buscar referências relacionadas';
+  }
+}
+</script>
 
 </body>
 </html>
