@@ -41,6 +41,26 @@ def match():
     )
     return jsonify(resp.json()), resp.status_code
 
+@app.route("/api/refs")
+def refs():
+    query = request.args.get("query", "").strip()
+    if not query:
+        return jsonify({"error": "query obrigatória"}), 400
+    try:
+        resp = requests.get(
+            "https://api.semanticscholar.org/graph/v1/paper/search",
+            params={
+                "query": query[:300],
+                "fields": "title,authors,year,abstract,externalIds,openAccessPdf,citationCount",
+                "limit": 20
+            },
+            headers={"User-Agent": "QualisMatch/1.0"},
+            timeout=15
+        )
+        return jsonify(resp.json()), resp.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/health")
 def health():
     files = ["index.html", "qualis_data.b64", "sjr_data.b64"]

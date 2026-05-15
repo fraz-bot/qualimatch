@@ -689,7 +689,7 @@ async function buscarRefs() {
 
   try {
     var q = encodeURIComponent(query.substring(0, 200));
-    var url = 'https://api.semanticscholar.org/graph/v1/paper/search?query=' + q + '&fields=title,authors,year,abstract,externalIds,openAccessPdf,citationCount&limit=20';
+    var url = '/api/refs?query=' + q;
     var resp = await fetch(url);
     if (!resp.ok) throw new Error('Erro na API (' + resp.status + ')');
     var data = await resp.json();
