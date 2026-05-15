@@ -37,6 +37,10 @@
   .chip.sel.B3{background:#85B7EB;color:#0C447C;border-color:#85B7EB}
   .chip.sel.B4{background:#B5D4F4;color:#0C447C;border-color:#B5D4F4}
   .chip.sel.C{background:#888;color:white;border-color:#888}
+  .chip.sel.SQ1{background:#085041;color:#9FE1CB;border-color:#085041}
+  .chip.sel.SQ2{background:#1D9E75;color:white;border-color:#1D9E75}
+  .chip.sel.SQ3{background:#f59e0b;color:white;border-color:#f59e0b}
+  .chip.sel.SQ4{background:#6b7280;color:white;border-color:#6b7280}
   .filter-note{font-size:11px;color:#bbb;margin-top:7px}
   .area-search-wrap{position:relative}
   .area-search{width:100%;padding:9px 36px 9px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fafafa;color:#1a1a1a;font-family:inherit;transition:border-color .15s}
@@ -87,6 +91,21 @@
   .mlabel{font-size:11px;color:#aaa;min-width:90px}
   .mbar-bg{flex:1;height:5px;background:#eee;border-radius:99px;overflow:hidden}
   .mbar{height:100%;background:linear-gradient(to right,#1D9E75,#085041);border-radius:99px}
+  .tabs{display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:24px}
+  .tab{padding:12px 24px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s}
+  .tab.active{color:#085041;border-bottom-color:#1D9E75}
+  .tab:hover:not(.active){color:#374151}
+  .ref-card{background:white;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;margin-bottom:12px}
+  .ref-title{font-size:15px;font-weight:700;color:#111;margin-bottom:6px;line-height:1.4}
+  .ref-title a{color:#085041;text-decoration:none}
+  .ref-title a:hover{text-decoration:underline}
+  .ref-meta{font-size:12px;color:#6b7280;margin-bottom:8px}
+  .ref-abstract{font-size:13px;color:#374151;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .ref-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+  .ref-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px}
+  .ref-badge.oa{background:#d1fae5;color:#065f46}
+  .ref-badge.cite{background:#eff6ff;color:#1e40af}
+  .ref-badge.doi{background:#f3f4f6;color:#374151}
   .badge-capes{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;background:#1a56db;color:white;padding:3px 9px;border-radius:99px;margin-bottom:8px}
   .badge-scopus{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;margin-bottom:8px;margin-left:6px}
   .badge-scopus.Q1{background:#085041;color:#9FE1CB}
@@ -194,7 +213,12 @@
 </div>
 
 <div class="container">
-  <p class="subtitle">Busca inteligente de periódicos acadêmicos. Cole o resumo do seu artigo, selecione a área e encontre as melhores revistas do <strong>Qualis CAPES 2021-2024</strong> para submissão.</p>
+  <div class="tabs">
+  <div class="tab active" onclick="switchMainTab('match',this)">🔍 Match por artigo</div>
+  <div class="tab" onclick="switchMainTab('refs',this)">📚 Buscar referências</div>
+</div>
+<div id="tab-match">
+<p class="subtitle">Busca inteligente de periódicos acadêmicos. Cole o resumo do seu artigo, selecione a área e encontre as melhores revistas do <strong>Qualis CAPES 2021-2024</strong> para submissão.</p>
 
   <div class="card">
     <div class="card-title">🎯 Filtros</div>
@@ -213,6 +237,17 @@
           <span class="chip C"  data-v="C"  onclick="togQ(this)">C</span>
         </div>
         <p class="filter-note">Sem seleção = todos os estratos</p>
+      </div>
+
+      <div class="field">
+        <label>Quartil Scopus (SJR 2025)</label>
+        <div class="chip-group">
+          <span class="chip SQ1" data-v="Q1" onclick="togSQ(this)">Q1</span>
+          <span class="chip SQ2" data-v="Q2" onclick="togSQ(this)">Q2</span>
+          <span class="chip SQ3" data-v="Q3" onclick="togSQ(this)">Q3</span>
+          <span class="chip SQ4" data-v="Q4" onclick="togSQ(this)">Q4</span>
+        </div>
+        <p class="filter-note">Sem seleção = todos os quartis</p>
       </div>
       <div class="field">
         <label>Área de Avaliação CAPES <span style="color:#e53e3e;font-size:11px;font-weight:700;background:#fff5f5;padding:2px 7px;border-radius:99px;border:1px solid #fca5a5;margin-left:4px">obrigatório</span></label>
@@ -341,6 +376,9 @@ document.addEventListener('click',e=>{if(!document.getElementById('area-wrap').c
 // ── Qualis chips ───────────────────────────────────────────────
 const selQ=new Set();
 function togQ(el){const v=el.dataset.v;if(selQ.has(v)){selQ.delete(v);el.classList.remove('sel',v);}else{selQ.add(v);el.classList.add('sel',v);}}
+
+const selSQ=new Set();
+function togSQ(el){const v=el.dataset.v;const cls='SQ'+v[1];if(selSQ.has(v)){selSQ.delete(v);el.classList.remove('sel',cls);}else{selSQ.add(v);el.classList.add('sel',cls);}}
 
 // ── Exemplos ───────────────────────────────────────────────────
 const EX={
@@ -606,5 +644,90 @@ async function doLogout() {
 
 window.addEventListener('load', initAuth);
 </script>
+
+<!-- Seção Referências -->
+<div id="tab-refs" style="display:none">
+  <div class="card">
+    <div class="card-title">📄 DADOS DO ARTIGO</div>
+    <div class="field">
+      <label>TÍTULO</label>
+      <input type="text" id="ref-titulo" placeholder="Ex: Deep learning applied to power systems..." maxlength="300">
+    </div>
+    <div class="field">
+      <label>ABSTRACT / RESUMO</label>
+      <textarea id="ref-abstract" rows="6" placeholder="Cole aqui o abstract ou resumo. Português ou inglês."></textarea>
+    </div>
+    <button class="btn" onclick="buscarRefs()">📚 Buscar referências relacionadas</button>
+  </div>
+  <div id="ref-results"></div>
+</div>
+
+<script>
+function switchMainTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-refs').style.display = tab === 'refs' ? 'block' : 'none';
+  document.getElementById('tab-match').style.display = tab === 'match' ? 'block' : 'none';
+}
+
+async function buscarRefs() {
+  const titulo = (document.getElementById('ref-titulo').value || '').trim();
+  const abst   = (document.getElementById('ref-abstract').value || '').trim();
+  const query  = (titulo + ' ' + abst).substring(0, 300).trim();
+  const resDiv = document.getElementById('ref-results');
+
+  if (query.length < 10) {
+    resDiv.innerHTML = '<div class="err">⚠️ Preencha ao menos o título ou abstract.</div>';
+    return;
+  }
+
+  const btn = document.querySelector('#tab-refs .btn');
+  btn.disabled = true; btn.textContent = '⏳ Buscando...';
+  resDiv.innerHTML = '<div style="text-align:center;padding:32px;color:#6b7280">Consultando base de artigos científicos...</div>';
+
+  try {
+    const q   = encodeURIComponent(query.substring(0, 200));
+    const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${q}&fields=title,authors,year,abstract,externalIds,openAccessPdf,citationCount&limit=20`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Erro na API (' + resp.status + ')');
+    const data   = await resp.json();
+    const papers = data.data || [];
+
+    if (!papers.length) {
+      resDiv.innerHTML = '<div class="err">⚠️ Nenhuma referência encontrada. Tente reformular o abstract.</div>';
+      return;
+    }
+
+    let out = `<div style="font-size:13px;color:#6b7280;margin-bottom:16px">${papers.length} referências encontradas via Semantic Scholar</div>`;
+
+    papers.forEach((p, i) => {
+      const doi     = p.externalIds?.DOI || '';
+      const doiUrl  = doi ? 'https://doi.org/' + doi : '';
+      const pdfUrl  = p.openAccessPdf?.url || '';
+      const autores = (p.authors || []).slice(0,3).map(a => a.name).join(', ') + ((p.authors||[]).length > 3 ? ' et al.' : '');
+      const absTxt  = p.abstract ? p.abstract.substring(0,300) + '…' : '';
+
+      out += \`<div class="ref-card">
+        <div class="ref-title">\${doiUrl ? \`<a href="\${doiUrl}" target="_blank">\${i+1}. \${p.title}</a>\` : \`\${i+1}. \${p.title}\`}</div>
+        <div class="ref-meta">\${autores}\${autores && p.year ? ' · ' : ''}\${p.year || ''}</div>
+        \${absTxt ? \`<div class="ref-abstract">\${absTxt}</div>\` : ''}
+        <div class="ref-badges">
+          \${p.citationCount ? \`<span class="ref-badge cite">📊 \${p.citationCount.toLocaleString('pt-BR')} citações</span>\` : ''}
+          \${pdfUrl ? \`<a href="\${pdfUrl}" target="_blank" class="ref-badge oa">📄 PDF gratuito</a>\` : ''}
+          \${doi ? \`<span class="ref-badge doi">DOI: \${doi}</span>\` : ''}
+        </div>
+      </div>\`;
+    });
+
+    resDiv.innerHTML = out;
+  } catch(e) {
+    resDiv.innerHTML = '<div class="err">❌ Erro ao buscar referências: ' + e.message + '</div>';
+  } finally {
+    btn.disabled = false; btn.textContent = '📚 Buscar referências relacionadas';
+  }
+}
+</script>
+
 </body>
-</html>
+</html</div>
+>
